@@ -206,9 +206,9 @@ const SelectPaymentAmount = () => {
         body: JSON.stringify({
           assetId: selectedPerson.asset,
           transactionId: '1',
-          transactiontype: "OUTGOING",
+          transactiontype: "INCOMING",
           toAddress: selectedPerson.address,
-          amount: conversionValue,
+          exactAmount: conversionValue,
           orderId,
           merchantId,
           customerId,
