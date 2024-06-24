@@ -24,7 +24,7 @@ const SelectCurrency = () => {
             });
 
             const data = await response.json();
-            if (!response.ok) {
+            if (response.ok) {
                 if (data.message === 'Your wallets are already created') {
                     toast.success(data.message);
                     await router.push('./SelectPaymentAmount');

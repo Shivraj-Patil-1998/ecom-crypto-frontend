@@ -135,6 +135,8 @@ const SelectPaymentAmount = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [conversionValue, setConversionValue] = useState(0);
   const [conversionValueSingle, setConversionValueSingle] = useState(0);
+  const [openBlock, setOpenBlock] = useState(false);
+  const [blockData, setBlockData] = useState<any>(null);
 
   const handleTextClick = () => {
     setInputVisible(true);
@@ -161,25 +163,25 @@ const SelectPaymentAmount = () => {
 
   const handleClick = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/customer/assets`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/subwallets/${merchantId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ merchantId, customerId }),
+        body: JSON.stringify({ customerId }),
       });
-      if (!response.ok) {
-        throw new Error('Failed to get customer assets');
-      }
+      // if (!response.ok) {
+      //   throw new Error('Failed to get customer assets');
+      // }
       const data = await response.json();
-      console.log("datadata", data);
+      console.log("datadata", data?.existingCustomerWallets);
 
-      // Extract walletName array from the data
-      const { walletName } = data;
+      // Extract existingCustomerWallets array from the data
+      const { existingCustomerWallets } = data;
 
       // Update addresses in the initialPeople array
       initialPeople.forEach(person => {
-        const matchedWallet = walletName.find((wallet: { assetId: string; }) => wallet.assetId === person.asset);
+        const matchedWallet = existingCustomerWallets.find((wallet: { assetId: string; }) => wallet.assetId === person.asset);
         if (matchedWallet) {
           person.address = matchedWallet.address;
         }
@@ -189,6 +191,7 @@ const SelectPaymentAmount = () => {
       const updatedSelectedPerson = initialPeople.find(person => person.id === selectedPerson.id);
       if (updatedSelectedPerson) {
         setSelectedPerson(updatedSelectedPerson);
+        console.log(updatedSelectedPerson)
       }
 
     } catch (error) {
@@ -219,7 +222,8 @@ const SelectPaymentAmount = () => {
 
       const data = await response.json();
       if (!response.ok) {
-        toast.error(data.message)
+        setBlockData(data)
+        setOpenBlock(true)
         setIsSecondDialogOpen(isSecondDialogOpen)
       } else {
         setIsOpen(false);
@@ -588,6 +592,41 @@ const SelectPaymentAmount = () => {
           </div>
         </div>
       </Dialog>
+
+
+      <Dialog
+        open={openBlock && blockData !== null}
+        onClose={() => {
+          setOpenBlock(false);
+          setBlockData(null); // Clear error details on close
+        }}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black">
+          <div className="w-[90%] md:w-[700px] space-y-4 border bg-[#f9fcff] p-10 rounded-lg">
+            <p className="text-[32px] font-normal">Blocking Message</p>
+            <p className="text-[#898da8] text-base">{blockData?.message}</p>
+            {blockData?.blockedTransaction && (
+              <div>
+                <p>Transaction ID: {blockData.blockedTransaction.transactionId}</p>
+                <p>Asset ID: {blockData.blockedTransaction.assetId}</p>
+                <p>Amount: {blockData.blockedTransaction.amount}</p>
+              </div>
+            )}
+            <button
+              onClick={() => {
+                setOpenBlock(false);
+                setBlockData(null); // Clear error details on close
+              }}
+              className="bg-[#C2912E] text-white px-6 py-3 w-full rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+
 
       <div className="flex flex-col gap-8 justify-center items-center h-full w-full absolute bg-[#F9F9F9]">
         <p className=" text-4xl leading-[48px]">Deposit amount</p>
