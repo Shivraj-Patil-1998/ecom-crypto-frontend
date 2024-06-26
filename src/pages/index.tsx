@@ -5,15 +5,17 @@ import { usePayment } from '../context/PaymentContext';
 
 const Home = () => {
   const router = useRouter();
-  const { orderId, setOrderId, merchantId, setMerchantId, customerId, setCustomerId } = usePayment();
+  const { orderId, setOrderId, merchantId, setMerchantId, customerId, setCustomerId, apiKey, setApiKey, secretKey, setSecretKey } = usePayment();
   const [errors, setErrors] = useState({
     merchantId: '',
     customerId: '',
     orderId: '',
+    apiKey: '',
+    secretKey: ''
   });
 
   const validateFields = () => {
-    const newErrors = { merchantId: '', customerId: '', orderId: '' };
+    const newErrors = { merchantId: '', customerId: '', orderId: '', apiKey: '', secretKey: '' };
     if (merchantId.trim() === '') {
       newErrors.merchantId = 'Merchant ID is required';
     }
@@ -22,6 +24,12 @@ const Home = () => {
     }
     if (orderId.trim() === '') {
       newErrors.orderId = 'This field is required';
+    }
+    if (apiKey.trim() === '') {
+      newErrors.apiKey = 'Api Key is required';
+    }
+    if (secretKey.trim() === '') {
+      newErrors.secretKey = 'Secret Key is required';
     }
     setErrors(newErrors);
     return !Object.values(newErrors).some(error => error !== '');
@@ -88,6 +96,40 @@ const Home = () => {
             />
           </div>
           {errors.orderId && <p className="text-red-500 text-sm mt-1">{errors.orderId}</p>}
+        </div>
+        <div className="mx-auto w-[90%]">
+          <p className="mb-2">Api Key</p>
+          <div className="border-[#cdcdcd] border rounded-lg w-full flex justify-between p-2">
+            <input
+              id="Api Key"
+              placeholder="0tjs....."
+              type="string"
+              value={apiKey}
+              onChange={(e) => {
+                setApiKey(e.target.value);
+                setErrors(prev => ({ ...prev, apiKey: '' }));
+              }}
+              className={`text-base outline-none w-full ${errors.apiKey ? 'border-red-500' : ''}`}
+            />
+          </div>
+          {errors.apiKey && <p className="text-red-500 text-sm mt-1">{errors.apiKey}</p>}
+        </div>
+        <div className="mx-auto w-[90%]">
+          <p className="mb-2">Secret Key</p>
+          <div className="border-[#cdcdcd] border rounded-lg w-full flex justify-between p-2">
+            <input
+              id="Secret Key"
+              placeholder="0tjs....."
+              type="string"
+              value={secretKey}
+              onChange={(e) => {
+                setSecretKey(e.target.value);
+                setErrors(prev => ({ ...prev, secretKey: '' }));
+              }}
+              className={`text-base outline-none w-full ${errors.secretKey ? 'border-red-500' : ''}`}
+            />
+          </div>
+          {errors.secretKey && <p className="text-red-500 text-sm mt-1">{errors.secretKey}</p>}
         </div>
         <div className="bg-[#f7f9f9] rounded-lg mx-auto w-[90%]">
           <button

@@ -155,7 +155,7 @@ const SelectPaymentAmount = () => {
     setCoin('');
   };
 
-  const { merchantId, customerId, orderId } = usePayment();
+  const { merchantId, customerId, orderId, apiKey, secretKey } = usePayment();
 
   useEffect(() => {
     handleClick()
@@ -168,13 +168,9 @@ const SelectPaymentAmount = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ customerId }),
+        body: JSON.stringify({ customerId, apiKey, secretKey }),
       });
-      // if (!response.ok) {
-      //   throw new Error('Failed to get customer assets');
-      // }
       const data = await response.json();
-      console.log("datadata", data?.existingCustomerWallets);
 
       // Extract existingCustomerWallets array from the data
       const { existingCustomerWallets } = data;
@@ -305,6 +301,30 @@ const SelectPaymentAmount = () => {
       .catch((err) => {
         console.error('Failed to copy: ', err);
       });
+  };
+
+  const [blockDataTime, setBlockDataTime] = useState(0);
+
+  useEffect(() => {
+    if (blockData) {
+      const createdAt: any = new Date(blockData.blockedTransaction.createdAt);
+      const updateCountdown = () => {
+        const currentTime: any = new Date();
+        const timeDiff = Math.floor((currentTime - createdAt) / 1000);
+        const countdownTime = 600 - timeDiff; // 10 minutes countdown
+        setBlockDataTime(countdownTime > 0 ? countdownTime : 0);
+      };
+      updateCountdown();
+      const intervalId = setInterval(updateCountdown, 1000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [blockData]);
+
+  const formatTime = (seconds: any) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
 
   return (
@@ -554,7 +574,8 @@ const SelectPaymentAmount = () => {
                 </div>
               </>
             ) : (
-              <></>
+              <>
+              </>
             )}
 
             <div className="flex flex-col-reverse gap-4 md:flex-row  py-4 ">
@@ -591,42 +612,7 @@ const SelectPaymentAmount = () => {
             </button>
           </div>
         </div>
-      </Dialog>
-
-
-      <Dialog
-        open={openBlock && blockData !== null}
-        onClose={() => {
-          setOpenBlock(false);
-          setBlockData(null); // Clear error details on close
-        }}
-        className="relative z-50"
-      >
-        <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black">
-          <div className="w-[90%] md:w-[700px] space-y-4 border bg-[#f9fcff] p-10 rounded-lg">
-            <p className="text-[32px] font-normal">Blocking Message</p>
-            <p className="text-[#898da8] text-base">{blockData?.message}</p>
-            {blockData?.blockedTransaction && (
-              <div>
-                <p>Transaction ID: {blockData.blockedTransaction.transactionId}</p>
-                <p>Asset ID: {blockData.blockedTransaction.assetId}</p>
-                <p>Amount: {blockData.blockedTransaction.amount}</p>
-              </div>
-            )}
-            <button
-              onClick={() => {
-                setOpenBlock(false);
-                setBlockData(null); // Clear error details on close
-              }}
-              className="bg-[#C2912E] text-white px-6 py-3 w-full rounded"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </Dialog>
-
-
+      </Dialog >
 
       <div className="flex flex-col gap-8 justify-center items-center h-full w-full absolute bg-[#F9F9F9]">
         <p className=" text-4xl leading-[48px]">Deposit amount</p>
@@ -665,7 +651,89 @@ const SelectPaymentAmount = () => {
         </div>
       </div>
       <ToastContainer />
-    </div>
+
+      <Dialog
+      open={openBlock && blockData !== null}
+      onClose={() => {
+        setOpenBlock(false);
+        setBlockData(null); // Clear error details on close
+      }}
+      className="relative z-50"
+    >
+      <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black">
+        <div className="relative w-[95%] md:w-[700px] h-[90vh] overflow-y-auto md:h-auto space-y-4 border bg-[#f9fcff] py-8 px-5 md:p-10 rounded-lg">
+          <div className="text-center">
+            <p className="text-[32px] font-normal">Transaction In Process</p>
+            <p className="text-[#898da8] text-base">
+              Amount: {blockData?.blockedTransaction?.amount} <span>{blockData?.blockedTransaction?.assetId}</span>
+            </p>
+            <p className="text-[#FF0000] text-base">
+              Note: {blockData?.message} for {formatTime(blockDataTime)}
+            </p>
+          </div>
+          <div className="flex flex-col-reverse md:flex-row bg-white shadow-lg rounded-lg">
+            <div className="md:min-w-[238px] w-full flex flex-col justify-center items-center py-4 px-2 md:p-2 border-r border-[#cdcdcd]">
+              <QRCode value={blockData?.blockedTransaction?.toAddress} />
+              <p className="w-full text-[10px] text-[#6b7192] mt-4 break-words text-center">
+                {blockData?.blockedTransaction?.toAddress}
+              </p>
+              <p className={`text-white px-3 rounded-full mt-4 h-[50px] w-[50px] p-3 ${blockDataTime < 120 ? 'bg-[#F74B60]' : 'bg-[#000000]'}`}>
+                {formatTime(blockDataTime)}
+              </p>
+            </div>
+            <div className="md-min-w-[320px] w-full">
+              <div className="flex justify-between items-center border-b border-[#cdcdcd] p-4">
+                <div>
+                  <p className="text-[#898da8] text-sm">Send exact amount</p>
+                  <p className="text-[#15161b] text-[22px] font-semibold">
+                    {blockData?.blockedTransaction?.amount}{' '}{blockData?.blockedTransaction?.assetId}
+                  </p>
+                </div>
+                <Image className="w-[13.33px] h-[13.33px] cursor-pointer" src={Copy} alt="copy" />
+              </div>
+              <div className="flex justify-between items-center border-b border-[#cdcdcd] p-4">
+                <div>
+                  <p className="text-[#898da8] text-sm">To this {blockData?.blockedTransaction?.assetId} address</p>
+                  <p className="text-[#15161b] text-[14px] font-semibold">{blockData?.blockedTransaction?.toAddress}</p>
+                </div>
+              </div>
+              <div className="flex justify-between items-center border-b border-[#cdcdcd] p-4">
+                <div>
+                  <p className="text-[#898da8] text-sm">Chain Type</p>
+                  <p className="text-[#15161b] text-[22px] font-semibold">{blockData?.blockedTransaction?.assetId}</p>
+                </div>
+                <Image className="w-[13.33px] h-[13.33px] cursor-pointer" src={Copy} alt="copy" />
+              </div>
+              <div className="flex justify-center lg gap-4 items-center border-b border-[#cdcdcd] p-4 cursor-pointer">
+                <Image className="cursor-pointer" src={Wallet} alt="wallet" />
+                <p>Open wallet</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col-reverse gap-4 md:flex-row py-4">
+            <div className="flex items-start gap-2 p-2 w-full md:w-1/2">
+              <Image src={Exclamatory} alt="Exclamatory" className="w-6 h-6" />
+              <p className="text-[#6b7192] text-sm">
+                Make sure you send {blockData?.blockedTransaction?.assetId} within 10 minutes. Afterwards the rate will expire and you will have to create a new payment
+              </p>
+            </div>
+            <div className="flex flex-col gap-4 text-[#6b7192] w-full md:w-1/2">
+              <div className="flex justify-between items-center">
+                <p>Exchange rate fixed for</p>
+              </div>
+              <div className="flex justify-between items-center">
+                <p>Fixed rate</p>
+                <p>1 {blockData?.blockedTransaction?.assetId} = {conversionValueSingle} EUR</p>
+              </div>
+            </div>
+          </div>
+          <button onClick={() => setOpenBlock(false)} className="absolute top-0 right-3">
+            <Image src={Close} alt="Close" />
+          </button>
+        </div>
+      </div>
+    </Dialog>
+    </div >
   );
 };
 

@@ -8,6 +8,10 @@ interface PaymentContextType {
   setMerchantId: (merchantId: string) => void;
   customerId: string;
   setCustomerId: (customerId: string) => void;
+  apiKey: string;
+  setApiKey: (apiKey: string) => void;
+  secretKey: string;
+  setSecretKey: (secretKey: string) => void;
   // Add other properties here as needed
 }
 
@@ -25,10 +29,12 @@ export const PaymentProvider = ({ children }: { children: ReactNode }) => {
   const [orderId, setOrderId] = useState<string>('');
   const [merchantId, setMerchantId] = useState<string>('');
   const [customerId, setCustomerId] = useState<string>('');
+  const [apiKey, setApiKey] = useState<string>('');
+  const [secretKey, setSecretKey] = useState<string>('');
   // Add other state variables and setters here as needed
 
   return (
-    <PaymentContext.Provider value={{ orderId, setOrderId, merchantId, setMerchantId, customerId, setCustomerId }}>
+    <PaymentContext.Provider value={{ orderId, setOrderId, merchantId, setMerchantId, customerId, setCustomerId, apiKey, setApiKey, secretKey, setSecretKey }}>
       {children}
     </PaymentContext.Provider>
   );

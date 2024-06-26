@@ -12,7 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const SelectCurrency = () => {
     const router = useRouter();
 
-    const { merchantId, customerId } = usePayment();
+    const { merchantId, customerId, apiKey, secretKey } = usePayment();
     const handleClick = async () => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/subwallets/${merchantId}`, {
@@ -20,7 +20,7 @@ const SelectCurrency = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ customerId }),
+                body: JSON.stringify({ customerId, apiKey, secretKey }),
             });
 
             const data = await response.json();
@@ -31,6 +31,8 @@ const SelectCurrency = () => {
                 } else {
                     toast.error(data.message);
                 }
+            } else {
+                toast.error(data.message);
             }
         } catch (error) {
             console.error('Error:', error);
